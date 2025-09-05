@@ -7,7 +7,7 @@ from google.adk.agents import Agent
 # 1. Define Fungsi Rules + Agent
 # ======================================================
 def rekomendasi_jamu(keluhan: str) -> dict:
-    """Memberikan rekomendasi jamu atau obat herbal berdasarkan keluhan ringan.
+    """Memberikan rekomendasi jamu/herbal berdasarkan keluhan ringan.
        Jika indikasi red flag terdeteksi, sarankan segera ke dokter.
     """
     keluhan = keluhan.lower()
@@ -86,19 +86,31 @@ app = FastAPI(title="TemuSehat Chatbot API")
 # Simpan session sederhana
 sessions: Dict[str, Dict[str, Any]] = {}
 
+
+# ----------------------------
+# Request Models
+# ----------------------------
 class SessionRequest(BaseModel):
     user_id: str
     session_id: str
+
 
 class AskRequest(BaseModel):
     user_id: str
     session_id: str
     message: str
 
+
+# ----------------------------
+# Root
+# ----------------------------
 @app.get("/")
 def root():
     return {"status": "ok", "message": "TemuSehat API is running"}
 
+
+# ----------------------------
+# Create Session
 # ----------------------------
 @app.post("/create_session")
 def create_session(req: SessionRequest):
@@ -109,23 +121,31 @@ def create_session(req: SessionRequest):
     }
     return {"message": "Session created", "session": sessions[req.session_id]}
 
+
+# ----------------------------
+# Ask Agent
 # ----------------------------
 @app.post("/ask")
 def ask(req: AskRequest):
     if req.session_id not in sessions:
         return {"error": "Session not found"}
 
-    # simpan pesan user ke history
+    # simpan pesan user
     sessions[req.session_id]["history"].append({"role": "user", "content": req.message})
 
-    # panggil agent
-    response = root_agent.run(req.message)
+    try:
+        response = root_agent.run(req.message)
+    except Exception as e:
+        response = {"status": "error", "message": str(e)}
 
-    # simpan balasan ke history
+    # simpan balasan
     sessions[req.session_id]["history"].append({"role": "agent", "content": response})
 
     return {"reply": response, "session": sessions[req.session_id]}
 
+
+# ----------------------------
+# End Session
 # ----------------------------
 @app.post("/end_session")
 def end_session(req: SessionRequest):
