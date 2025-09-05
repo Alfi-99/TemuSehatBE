@@ -50,6 +50,9 @@ def rekomendasi_jamu(keluhan: str) -> dict:
     else:
         return {"type": "clarify"}  # fallback ke LLM
 
+# ======================================================
+# Initialize Agent
+# ======================================================
 root_agent = Agent(
     name="jamu_rekomendasi_agent",
     model="gemini-2.0-flash",
@@ -68,15 +71,18 @@ root_agent = Agent(
     tools=[rekomendasi_jamu],
 )
 
-# ✅ Tambahkan wrapper agar bisa dipanggil dengan .run()
+# ======================================================
+# Wrapper agent_run() kompatibel versi terbaru
+# ======================================================
 def agent_run(message: str) -> dict:
     try:
-        # panggil tool rekomendasi_jamu langsung
+        # panggil tool rules dulu
         result = rekomendasi_jamu(message)
 
-        # kalau tool tidak menemukan, fallback ke LLM agent
+        # kalau rules tidak menemukan, fallback ke LLM Agent
         if result.get("type") == "clarify":
-            llm_response = root_agent.run(message)
+            # Agent dipanggil seperti function di ADK terbaru
+            llm_response = root_agent(message)  
             return {"type": "llm", "reply": llm_response}
 
         return result
@@ -84,7 +90,7 @@ def agent_run(message: str) -> dict:
         return {"type": "error", "message": str(e)}
 
 # ======================================================
-# 2. FastAPI App + Endpoint
+# FastAPI App + Endpoint
 # ======================================================
 app = FastAPI(title="TemuSehat Chatbot API")
 
@@ -133,9 +139,10 @@ def ask(req: AskRequest):
     # simpan pesan user
     sessions[req.session_id]["history"].append({"role": "user", "content": req.message})
 
+    # panggil agent
     response = agent_run(req.message)
 
-    # simpan balasan
+    # simpan balasan agent
     sessions[req.session_id]["history"].append({"role": "agent", "content": response})
 
     return {"reply": response, "session": sessions[req.session_id]}
