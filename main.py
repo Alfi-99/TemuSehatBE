@@ -60,13 +60,14 @@ def agent_run(message: str) -> dict:
         result = rekomendasi_jamu(message)
 
         if result.get("type") == "clarify":
-            # Versi terbaru ADK: pakai `agent.ask(message)` atau `agent.plan().execute()`
-            llm_response = root_agent.ask(message)  # <- method resmi terbaru
+            # Versi terbaru ADK:
+            llm_response = root_agent.run(message)  # <- ganti ask() jadi run()
             return {"type": "llm", "reply": llm_response}
 
         return result
     except Exception as e:
         return {"type": "error", "message": str(e)}
+
 
 # ======================================================
 # 4. FastAPI App
