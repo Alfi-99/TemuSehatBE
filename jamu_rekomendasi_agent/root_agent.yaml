@@ -1,0 +1,4 @@
+# root_agent.yaml
+name: jamu_rekomendasi_agent
+type: llm
+llm_model: gemini-2.0-flash
