@@ -21,6 +21,9 @@ class AskRequest(BaseModel):
     session_id: str
     message: str
 
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "TemuSehat API is running"}
 
 # ==============================
 # 1. Create Session
@@ -91,3 +94,4 @@ def end_session(req: SessionRequest):
         return {"message": "Session ended", "response": resp.json()}
     except Exception:
         return {"message": "Session ended", "raw": resp.text}
+
