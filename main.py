@@ -60,6 +60,7 @@ def rekomendasi_jamu(keluhan: str) -> dict:
             ),
         }
 
+
 root_agent = Agent(
     name="jamu_rekomendasi_agent",
     model="gemini-2.0-flash",
@@ -78,6 +79,21 @@ root_agent = Agent(
     tools=[rekomendasi_jamu],
 )
 
+# ✅ Tambahkan wrapper agar bisa dipanggil dengan .run()
+def agent_run(message: str) -> dict:
+    try:
+        # panggil tool rekomendasi_jamu langsung
+        result = rekomendasi_jamu(message)
+
+        # kalau tool tidak menemukan, fallback ke LLM agent
+        if result.get("status") == "clarify":
+            llm_response = root_agent.respond(message)  # <-- gunakan respond() dari Agent
+            return {"status": "llm", "reply": llm_response}
+
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # ======================================================
 # 2. FastAPI App + Endpoint
 # ======================================================
@@ -86,7 +102,6 @@ app = FastAPI(title="TemuSehat Chatbot API")
 # Simpan session sederhana
 sessions: Dict[str, Dict[str, Any]] = {}
 
-
 # ----------------------------
 # Request Models
 # ----------------------------
@@ -94,12 +109,10 @@ class SessionRequest(BaseModel):
     user_id: str
     session_id: str
 
-
 class AskRequest(BaseModel):
     user_id: str
     session_id: str
     message: str
-
 
 # ----------------------------
 # Root
@@ -107,7 +120,6 @@ class AskRequest(BaseModel):
 @app.get("/")
 def root():
     return {"status": "ok", "message": "TemuSehat API is running"}
-
 
 # ----------------------------
 # Create Session
@@ -121,7 +133,6 @@ def create_session(req: SessionRequest):
     }
     return {"message": "Session created", "session": sessions[req.session_id]}
 
-
 # ----------------------------
 # Ask Agent
 # ----------------------------
@@ -133,16 +144,12 @@ def ask(req: AskRequest):
     # simpan pesan user
     sessions[req.session_id]["history"].append({"role": "user", "content": req.message})
 
-    try:
-        response = root_agent.run(req.message)
-    except Exception as e:
-        response = {"status": "error", "message": str(e)}
+    response = agent_run(req.message)
 
     # simpan balasan
     sessions[req.session_id]["history"].append({"role": "agent", "content": response})
 
     return {"reply": response, "session": sessions[req.session_id]}
-
 
 # ----------------------------
 # End Session
