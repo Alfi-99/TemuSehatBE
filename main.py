@@ -60,13 +60,15 @@ def agent_run(message: str) -> dict:
         result = rekomendasi_jamu(message)
 
         if result.get("type") == "clarify":
-            # Versi terbaru ADK:
-            llm_response = root_agent.run(message)  # <- ganti ask() jadi run()
+            # Versi terbaru ADK
+            plan = root_agent.plan(message)
+            llm_response = plan.execute()
             return {"type": "llm", "reply": llm_response}
 
         return result
     except Exception as e:
         return {"type": "error", "message": str(e)}
+
 
 
 # ======================================================
