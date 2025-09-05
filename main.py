@@ -4,12 +4,12 @@ from typing import Dict, Any
 from google.adk.agents import Agent
 
 # ======================================================
-# 1. Define Fungsi Rules + Agent
+# 1. Rules Function
 # ======================================================
 def rekomendasi_jamu(keluhan: str) -> dict:
     keluhan = keluhan.lower()
 
-    # --- Red flag check ---
+    # Red flag check
     red_flags = [
         "nyeri dada", "sakit jantung", "sesak napas", "pingsan",
         "muntah darah", "kelumpuhan", "sulit bicara", "kejang",
@@ -21,68 +21,47 @@ def rekomendasi_jamu(keluhan: str) -> dict:
             "message": "Segera konsultasi dokter. Ini tanda bahaya yang tidak bisa ditangani jamu."
         }
 
-    # --- Keluhan ringan rules ---
+    # Keluhan ringan
     if "batuk" in keluhan and "dahak" in keluhan:
-        return {
-            "type": "rule",
-            "rekomendasi": "Jahe hangat + madu + jeruk nipis cocok untuk batuk berdahak."
-        }
+        return {"type": "rule", "rekomendasi": "Jahe hangat + madu + jeruk nipis cocok untuk batuk berdahak."}
     elif "batuk" in keluhan and "kering" in keluhan:
-        return {
-            "type": "rule",
-            "rekomendasi": "Rebusan kunyit + madu atau daun sirih bagus untuk batuk kering."
-        }
+        return {"type": "rule", "rekomendasi": "Rebusan kunyit + madu atau daun sirih bagus untuk batuk kering."}
     elif "maag" in keluhan:
-        return {
-            "type": "rule",
-            "rekomendasi": "Air kunyit atau rebusan temulawak bisa membantu keluhan maag."
-        }
+        return {"type": "rule", "rekomendasi": "Air kunyit atau rebusan temulawak bisa membantu keluhan maag."}
     elif "pusing" in keluhan:
-        return {
-            "type": "rule",
-            "rekomendasi": "Wedang jahe atau teh daun pegagan bisa bantu meredakan pusing ringan."
-        }
+        return {"type": "rule", "rekomendasi": "Wedang jahe atau teh daun pegagan bisa bantu meredakan pusing ringan."}
     elif "susah tidur" in keluhan:
-        return {
-            "type": "rule",
-            "rekomendasi": "Teh chamomile atau rebusan daun pandan dapat membantu tidur lebih nyenyak."
-        }
+        return {"type": "rule", "rekomendasi": "Teh chamomile atau rebusan daun pandan dapat membantu tidur lebih nyenyak."}
     else:
         return {"type": "clarify"}  # fallback ke LLM
 
 # ======================================================
-# Initialize Agent
+# 2. Initialize Agent
 # ======================================================
 root_agent = Agent(
     name="jamu_rekomendasi_agent",
     model="gemini-2.0-flash",
-    description="Agent yang menggali keluhan kesehatan sebelum memberikan rekomendasi jamu/herbal.",
+    description="Agent untuk menggali keluhan dan rekomendasi jamu/herbal.",
     instruction=(
         "Kamu adalah konsultan herbal yang ramah dan semi-edukatif. "
-        "Fokus pada penyakit ringan yang lazim ditangani jamu atau obat tradisional. "
-        "Setiap kali user menyebutkan keluhan, jangan langsung kasih rekomendasi. "
-        "Pertama, gali detail gejala: intensitas, lokasi, durasi, dan gejala penyerta. "
-        "Jika indikasi penyakit berat atau tanda bahaya (red flag) terdeteksi, "
-        "jangan berikan jamu apapun. Langsung sarankan ke dokter dan kembalikan "
-        "{\"type\": \"red_flag\", \"message\": \"Segera konsultasi dokter\"} ke backend. "
-        "Kalau gejalanya memang ringan, barulah beri rekomendasi jamu/herbal spesifik, "
-        "lengkap dengan penjelasan singkat mengapa cocok."
+        "Gali detail gejala sebelum beri rekomendasi. "
+        "Jika red flag, sarankan ke dokter. "
+        "Kalau ringan, berikan rekomendasi jamu/herbal."
     ),
     tools=[rekomendasi_jamu],
 )
 
 # ======================================================
-# Wrapper agent_run() kompatibel versi terbaru
+# 3. Wrapper yang kompatibel versi terbaru
 # ======================================================
 def agent_run(message: str) -> dict:
     try:
-        # panggil tool rules dulu
+        # Cek rules dulu
         result = rekomendasi_jamu(message)
 
-        # kalau rules tidak menemukan, fallback ke LLM Agent
         if result.get("type") == "clarify":
-            # Agent dipanggil seperti function di ADK terbaru
-            llm_response = root_agent(message)  
+            # Versi terbaru ADK: pakai `agent.ask(message)` atau `agent.plan().execute()`
+            llm_response = root_agent.ask(message)  # <- method resmi terbaru
             return {"type": "llm", "reply": llm_response}
 
         return result
@@ -90,7 +69,7 @@ def agent_run(message: str) -> dict:
         return {"type": "error", "message": str(e)}
 
 # ======================================================
-# FastAPI App + Endpoint
+# 4. FastAPI App
 # ======================================================
 app = FastAPI(title="TemuSehat Chatbot API")
 
