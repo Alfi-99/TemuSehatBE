@@ -76,7 +76,7 @@ def agent_run(message: str) -> dict:
 
         # kalau tool tidak menemukan, fallback ke LLM agent
         if result.get("type") == "clarify":
-            llm_response = root_agent.respond(message)
+            llm_response = root_agent.run(message)
             return {"type": "llm", "reply": llm_response}
 
         return result
