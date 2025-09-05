@@ -5,50 +5,7 @@ Ini adalah panduan untuk menjalankan agent **`jamu_rekomendasi_agent`** mengguna
 
 ---
 
-## 1️⃣ Setup Environment
-
-1. Clone repo project ke lokal:
-```bash
-git clone <repo-url>
-cd TemuSehatBE
-```
-
-2. Aktifkan virtual environment:
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-3. Install dependencies:
-```powershell
-pip install -r requirements.txt
-```
-
-4. Buat file `.env` (jika belum ada):
-```
-GOOGLE_GENAI_USE_VERTEXAI=FALSE
-GOOGLE_API_KEY=<API_KEY_ANDA>
-```
-
----
-
-## 2️⃣ Railway Deployment
-
-1. **Custom Start Command** (Railway Settings → Deploy → Start Command):
-```bash
-adk api_server
-```
-> Ini akan langsung menjalankan **ADK API Server** di Railway tanpa perlu `main.py`.
-
-2. Deploy ke Railway.  
-3. Pastikan log muncul:
-```
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-```
-
----
-
-## 3️⃣ API Endpoints
+## 1 API Endpoints
 
 Railway URL: `https://temusehatbe-production.up.railway.app`
 
@@ -60,7 +17,7 @@ Railway URL: `https://temusehatbe-production.up.railway.app`
 
 ---
 
-## 4️⃣ PowerShell cURL Commands
+## 2 PowerShell cURL Commands
 
 ### 4.1 Buat Session
 ```powershell
@@ -84,7 +41,7 @@ curl -X DELETE https://temusehatbe-production.up.railway.app/apps/jamu_rekomenda
 
 ---
 
-## 5️⃣ Testing / Debugging
+## 4 Testing / Debugging
 
 1. Setelah server jalan, buka **Swagger UI**:
 ```
@@ -95,7 +52,7 @@ https://temusehatbe-production.up.railway.app/docs
 
 ---
 
-## 6️⃣ Tips
+## 6 Tips
 
 - Jika muncul `Session already exists`, hapus session dulu dengan endpoint DELETE.  
 - Pastikan `app_name` sama dengan folder agent (`jamu_rekomendasi_agent`).  
