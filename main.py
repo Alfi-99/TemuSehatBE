@@ -7,9 +7,6 @@ from google.adk.agents import Agent
 # 1. Define Fungsi Rules + Agent
 # ======================================================
 def rekomendasi_jamu(keluhan: str) -> dict:
-    """Memberikan rekomendasi jamu/herbal berdasarkan keluhan ringan.
-       Jika indikasi red flag terdeteksi, sarankan segera ke dokter.
-    """
     keluhan = keluhan.lower()
 
     # --- Red flag check ---
@@ -20,46 +17,38 @@ def rekomendasi_jamu(keluhan: str) -> dict:
     ]
     if any(flag in keluhan for flag in red_flags):
         return {
-            "status": "red_flag",
+            "type": "red_flag",
             "message": "Segera konsultasi dokter. Ini tanda bahaya yang tidak bisa ditangani jamu."
         }
 
     # --- Keluhan ringan rules ---
     if "batuk" in keluhan and "dahak" in keluhan:
         return {
-            "status": "success",
+            "type": "rule",
             "rekomendasi": "Jahe hangat + madu + jeruk nipis cocok untuk batuk berdahak."
         }
     elif "batuk" in keluhan and "kering" in keluhan:
         return {
-            "status": "success",
+            "type": "rule",
             "rekomendasi": "Rebusan kunyit + madu atau daun sirih bagus untuk batuk kering."
         }
     elif "maag" in keluhan:
         return {
-            "status": "success",
+            "type": "rule",
             "rekomendasi": "Air kunyit atau rebusan temulawak bisa membantu keluhan maag."
         }
     elif "pusing" in keluhan:
         return {
-            "status": "success",
+            "type": "rule",
             "rekomendasi": "Wedang jahe atau teh daun pegagan bisa bantu meredakan pusing ringan."
         }
     elif "susah tidur" in keluhan:
         return {
-            "status": "success",
+            "type": "rule",
             "rekomendasi": "Teh chamomile atau rebusan daun pandan dapat membantu tidur lebih nyenyak."
         }
     else:
-        return {
-            "status": "clarify",
-            "clarify_message": (
-                "Bisa ceritakan lebih detail tentang keluhanmu? Misalnya sifatnya "
-                "(tajam, tumpul, berdenyut), gejala penyerta (demam, mual, dll), "
-                "atau sudah berapa lama dirasakan."
-            ),
-        }
-
+        return {"type": "clarify"}  # fallback ke LLM
 
 root_agent = Agent(
     name="jamu_rekomendasi_agent",
@@ -72,7 +61,7 @@ root_agent = Agent(
         "Pertama, gali detail gejala: intensitas, lokasi, durasi, dan gejala penyerta. "
         "Jika indikasi penyakit berat atau tanda bahaya (red flag) terdeteksi, "
         "jangan berikan jamu apapun. Langsung sarankan ke dokter dan kembalikan "
-        "{\"status\": \"red_flag\", \"message\": \"Segera konsultasi dokter\"} ke backend. "
+        "{\"type\": \"red_flag\", \"message\": \"Segera konsultasi dokter\"} ke backend. "
         "Kalau gejalanya memang ringan, barulah beri rekomendasi jamu/herbal spesifik, "
         "lengkap dengan penjelasan singkat mengapa cocok."
     ),
@@ -86,13 +75,13 @@ def agent_run(message: str) -> dict:
         result = rekomendasi_jamu(message)
 
         # kalau tool tidak menemukan, fallback ke LLM agent
-        if result.get("status") == "clarify":
-            llm_response = root_agent.respond(message)  # <-- gunakan respond() dari Agent
-            return {"status": "llm", "reply": llm_response}
+        if result.get("type") == "clarify":
+            llm_response = root_agent.respond(message)
+            return {"type": "llm", "reply": llm_response}
 
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"type": "error", "message": str(e)}
 
 # ======================================================
 # 2. FastAPI App + Endpoint
