@@ -38,7 +38,105 @@ temusehat-php-client/
 ---
 
 ## 💻 Contoh Kode
+```php
+<?php
+header('Content-Type: application/json');  // set header JSON
 
+// Base URL FastAPI kamu
+$base_url = "https://temusehat-production.up.railway.app";
+
+// ----------------------------
+// 1️⃣ Create Session
+// ----------------------------
+function create_session($user_id, $session_id) {
+    global $base_url;
+    $url = "$base_url/create_session";
+
+    $data = array(
+        "user_id" => $user_id,
+        "session_id" => $session_id
+    );
+
+    $options = array(
+        "http" => array(
+            "header"  => "Content-type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data)
+        )
+    );
+
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    return $result ? $result : json_encode(["error" => "Create session failed"]);
+}
+
+// ----------------------------
+// 2️⃣ Ask Agent
+// ----------------------------
+function ask_agent($user_id, $session_id, $message) {
+    global $base_url;
+    $url = "$base_url/ask";
+
+    $data = array(
+        "user_id" => $user_id,
+        "session_id" => $session_id,
+        "message" => $message
+    );
+
+    $options = array(
+        "http" => array(
+            "header"  => "Content-type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data)
+        )
+    );
+
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    return $result ? $result : json_encode(["error" => "Ask agent failed"]);
+}
+
+// ----------------------------
+// 3️⃣ End Session
+// ----------------------------
+function end_session($user_id, $session_id) {
+    global $base_url;
+    $url = "$base_url/end_session";
+
+    $data = array(
+        "user_id" => $user_id,
+        "session_id" => $session_id
+    );
+
+    $options = array(
+        "http" => array(
+            "header"  => "Content-type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data)
+        )
+    );
+
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    return $result ? $result : json_encode(["error" => "End session failed"]);
+}
+
+// ----------------------------
+// Example Usage
+// ----------------------------
+$user_id = "user123";
+$session_id = "sess123";
+
+$output = array(
+    "create_session" => json_decode(create_session($user_id, $session_id), true),
+    "ask_agent" => json_decode(ask_agent($user_id, $session_id, "Saya batuk kering"), true),
+    "end_session" => json_decode(end_session($user_id, $session_id), true)
+);
+
+echo json_encode($output, JSON_PRETTY_PRINT);
+?>
+
+```
 ```php
 <?php
 include 'temusehat_client.php'; // Jika dipisah file
